@@ -1,0 +1,29 @@
+name: PR webhook notify
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send PR notification card
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NOTIFY_WEBHOOK_URL: ${{ secrets.PR_NOTIFY_WEBHOOK_URL }}
+          PR_NOTIFY_WEBHOOK_FORMAT: ${{ vars.PR_NOTIFY_WEBHOOK_FORMAT }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: |
+          node scripts/pr-webhook-notify.mjs \
+            --repo "${{ github.repository }}" \
+            --pr "${{ github.event.pull_request.number }}" \
+            --event "${{ github.event_name }}" \
+            ${PR_NOTIFY_WEBHOOK_FORMAT:+--format "$PR_NOTIFY_WEBHOOK_FORMAT"}
